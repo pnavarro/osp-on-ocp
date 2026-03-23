@@ -1,0 +1,32 @@
+#SPDX-License-Identifier: GPL-2.0-or-later
+### REQUIRED
+namespace: agnosticd
+name: osp_on_ocp
+version: 0.1.0
+readme: README.md
+
+authors:
+- Alberto Gonzalez Rodriguez <josegonz@redhat.com>
+- Judd Maltin <jmaltin@redhat.com>
+
+### OPTIONAL but strongly recommended
+description: Workloads for Red Hat OpenStack Services on OpenShift (RHOSO) labs
+
+license:
+- GPL-2.0-or-later
+
+license_file: ''
+
+tags:
+- openstack
+- rhoso
+- openshift
+
+dependencies: {}
+
+repository: https://github.com/agnosticd/osp-on-ocp
+documentation: https://github.com/agnosticd/osp-on-ocp
+homepage: https://github.com/agnosticd/osp-on-ocp
+issues: https://github.com/agnosticd/osp-on-ocp/issues
+
+build_ignore: []

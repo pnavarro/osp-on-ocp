@@ -1,0 +1,13 @@
+---
+# IPAM4Lab service URL (required)
+# Example: https://ipam4lab-route-ipam4lab.apps.ocpv-infra01.dal12.infra.demo.redhat.com/
+ocp4_workload_rhoso_ipam4lab_service_url: ""
+
+# Unique identifier for the IP allocation (required)
+ocp4_workload_rhoso_ipam4lab_allocation_name: "{{ guid }}"
+
+# Cluster name for IP allocation - supports overlapping IPs across clusters (required)
+ocp4_workload_rhoso_ipam4lab_cluster_name: ""
+
+# HTTP request timeout in seconds
+ocp4_workload_rhoso_ipam4lab_request_timeout: 30

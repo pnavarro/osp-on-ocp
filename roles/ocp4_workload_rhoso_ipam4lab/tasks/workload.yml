@@ -1,0 +1,102 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+    - ocp4_workload_rhoso_ipam4lab_service_url | default('') | length > 0
+    - ocp4_workload_rhoso_ipam4lab_allocation_name | default('') | length > 0
+    - ocp4_workload_rhoso_ipam4lab_cluster_name | default('') | length > 0
+    quiet: true
+    fail_msg: >-
+      Required variables not defined: ocp4_workload_rhoso_ipam4lab_service_url,
+      ocp4_workload_rhoso_ipam4lab_allocation_name, and
+      ocp4_workload_rhoso_ipam4lab_cluster_name must be set.
+
+- name: Allocate IP addresses from IPAM4Lab service
+  block:
+  - name: Call IPAM4Lab allocation API
+    ansible.builtin.uri:
+      url: "{{ ocp4_workload_rhoso_ipam4lab_service_url }}/allocate"
+      method: POST
+      body_format: json
+      body:
+        lab_uid: "{{ ocp4_workload_rhoso_ipam4lab_allocation_name }}"
+        cluster: "{{ ocp4_workload_rhoso_ipam4lab_cluster_name }}"
+      headers:
+        Content-Type: "application/json"
+      timeout: "{{ ocp4_workload_rhoso_ipam4lab_request_timeout }}"
+      status_code: [200, 201]
+    register: r_ipam_allocation
+
+  - name: Extract IP allocation variables
+    ansible.builtin.set_fact:
+      _ocp4_workload_rhoso_ipam4lab_worker_ip_1: "{{ r_ipam_allocation.json.allocation.EXTERNAL_IP_WORKER_1 }}"
+      _ocp4_workload_rhoso_ipam4lab_worker_ip_2: "{{ r_ipam_allocation.json.allocation.EXTERNAL_IP_WORKER_2 }}"
+      _ocp4_workload_rhoso_ipam4lab_worker_ip_3: "{{ r_ipam_allocation.json.allocation.EXTERNAL_IP_WORKER_3 }}"
+      _ocp4_workload_rhoso_ipam4lab_bastion_ip: "{{ r_ipam_allocation.json.allocation.EXTERNAL_IP_BASTION }}"
+      _ocp4_workload_rhoso_ipam4lab_public_net_start: "{{ r_ipam_allocation.json.allocation.PUBLIC_NET_START }}"
+      _ocp4_workload_rhoso_ipam4lab_public_net_end: "{{ r_ipam_allocation.json.allocation.PUBLIC_NET_END }}"
+      _ocp4_workload_rhoso_ipam4lab_conversion_host_ip: "{{ r_ipam_allocation.json.allocation.CONVERSION_HOST_IP }}"
+      _ocp4_workload_rhoso_ipam4lab_allocation_name: "{{ r_ipam_allocation.json.lab_uid | default(r_ipam_allocation.json.name) }}"
+      _ocp4_workload_rhoso_ipam4lab_cluster_name: "{{ r_ipam_allocation.json.cluster }}"
+      _ocp4_workload_rhoso_ipam4lab_subnet: "{{ r_ipam_allocation.json.subnet }}"
+      _ocp4_workload_rhoso_ipam4lab_network: "{{ r_ipam_allocation.json.network }}"
+
+  - name: Report allocation details
+    ansible.builtin.debug:
+      msg:
+      - "IPAM4Lab allocation successful:"
+      - "  Allocation name: {{ _ocp4_workload_rhoso_ipam4lab_allocation_name }}"
+      - "  Cluster: {{ _ocp4_workload_rhoso_ipam4lab_cluster_name }}"
+      - "  Subnet: {{ _ocp4_workload_rhoso_ipam4lab_subnet }}"
+      - "  Network: {{ _ocp4_workload_rhoso_ipam4lab_network }}"
+      - "  Worker IPs: {{ _ocp4_workload_rhoso_ipam4lab_worker_ip_1 }}, {{ _ocp4_workload_rhoso_ipam4lab_worker_ip_2 }}, {{ _ocp4_workload_rhoso_ipam4lab_worker_ip_3 }}"
+      - "  Bastion IP: {{ _ocp4_workload_rhoso_ipam4lab_bastion_ip }}"
+      - "  Public network range: {{ _ocp4_workload_rhoso_ipam4lab_public_net_start }} - {{ _ocp4_workload_rhoso_ipam4lab_public_net_end }}"
+      - "  Conversion host IP: {{ _ocp4_workload_rhoso_ipam4lab_conversion_host_ip }}"
+
+  rescue:
+  - name: IPAM allocation failed
+    ansible.builtin.fail:
+      msg: |
+        Failed to allocate IP addresses from IPAM4Lab service:
+        URL: {{ ocp4_workload_rhoso_ipam4lab_service_url }}/allocate
+        Error: {{ r_ipam_allocation.msg | default('Unknown error') }}
+        Status code: {{ r_ipam_allocation.status | default('N/A') }}
+
+- name: Store IP allocation data for other workloads
+  agnosticd_user_info:
+    data:
+      rhoso_cluster_name: "{{ ocp4_workload_rhoso_ipam4lab_cluster_name }}"
+      rhoso_ipam_allocation_name: "{{ _ocp4_workload_rhoso_ipam4lab_allocation_name }}"
+      rhoso_ipam_cluster_name: "{{ _ocp4_workload_rhoso_ipam4lab_cluster_name }}"
+      rhoso_ipam_subnet: "{{ _ocp4_workload_rhoso_ipam4lab_subnet }}"
+      rhoso_ipam_network: "{{ _ocp4_workload_rhoso_ipam4lab_network }}"
+      rhoso_external_ip_worker_1: "{{ _ocp4_workload_rhoso_ipam4lab_worker_ip_1 }}"
+      rhoso_external_ip_worker_2: "{{ _ocp4_workload_rhoso_ipam4lab_worker_ip_2 }}"
+      rhoso_external_ip_worker_3: "{{ _ocp4_workload_rhoso_ipam4lab_worker_ip_3 }}"
+      rhoso_external_ip_bastion: "{{ _ocp4_workload_rhoso_ipam4lab_bastion_ip }}"
+      rhoso_public_net_start: "{{ _ocp4_workload_rhoso_ipam4lab_public_net_start }}"
+      rhoso_public_net_end: "{{ _ocp4_workload_rhoso_ipam4lab_public_net_end }}"
+      rhoso_conversion_host_ip: "{{ _ocp4_workload_rhoso_ipam4lab_conversion_host_ip }}"
+
+- name: Report IP allocation to user
+  agnosticd_user_info:
+    msg:
+    - ""
+    - "RHOSO External IP Allocation Details:"
+    - "======================================="
+    - ""
+    - "Allocation Name: {{ _ocp4_workload_rhoso_ipam4lab_allocation_name }}"
+    - "Cluster: {{ _ocp4_workload_rhoso_ipam4lab_cluster_name }}"
+    - "Network Subnet: {{ _ocp4_workload_rhoso_ipam4lab_subnet }}"
+    - "Network CIDR: {{ _ocp4_workload_rhoso_ipam4lab_network }}"
+    - ""
+    - "Allocated IP Addresses:"
+    - "  EXTERNAL_IP_WORKER_1={{ _ocp4_workload_rhoso_ipam4lab_worker_ip_1 }}"
+    - "  EXTERNAL_IP_WORKER_2={{ _ocp4_workload_rhoso_ipam4lab_worker_ip_2 }}"
+    - "  EXTERNAL_IP_WORKER_3={{ _ocp4_workload_rhoso_ipam4lab_worker_ip_3 }}"
+    - "  EXTERNAL_IP_BASTION={{ _ocp4_workload_rhoso_ipam4lab_bastion_ip }}"
+    - "  PUBLIC_NET_START={{ _ocp4_workload_rhoso_ipam4lab_public_net_start }}"
+    - "  PUBLIC_NET_END={{ _ocp4_workload_rhoso_ipam4lab_public_net_end }}"
+    - "  CONVERSION_HOST_IP={{ _ocp4_workload_rhoso_ipam4lab_conversion_host_ip }}"
+    - ""

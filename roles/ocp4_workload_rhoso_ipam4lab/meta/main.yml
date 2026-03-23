@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: ocp4_workload_rhoso_ipam4lab
+  author:
+  - Alberto Gonzalez Rodriguez <josegonz@redhat.com>
+  description: |
+    Allocates IP addresses from the IPAM4Lab service for RHOSO lab deployments.
+    Provides external IPs for workers, bastion, public network range, and conversion host.
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.9"
+  platforms: []
+  galaxy_tags:
+  - ocp
+  - openshift
+  - openstack
+  - rhoso
+  - ipam
+dependencies: []
