@@ -34,7 +34,6 @@
     body_format: json
     body:
       name: "{{ _ocp4_workload_virt_roadshow_vmware_vcenter_folder }}"
-      type: VIRTUAL_MACHINE
       parent_folder: "{{ _ocp4_workload_virt_roadshow_vmware_parent_folder_id }}"
     validate_certs: "{{ ocp4_workload_virt_roadshow_vmware_enable_cert_validation | bool }}"
     status_code: 201
