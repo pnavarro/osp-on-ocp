@@ -1,0 +1,9 @@
+---
+- name: Remove SSH keys from student user .ssh directory
+  ansible.builtin.file:
+    path: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh/{{ item }}"
+    state: absent
+  loop:
+  - "{{ ocp4_workload_bastion_student_ssh_keys_private_key | basename }}"
+  - "{{ ocp4_workload_bastion_student_ssh_keys_public_key | basename }}"
+  - config

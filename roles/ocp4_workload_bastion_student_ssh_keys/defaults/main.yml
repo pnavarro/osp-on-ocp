@@ -1,0 +1,9 @@
+---
+# Student user name (must match bastion_student_user_name from the bastion role)
+ocp4_workload_bastion_student_ssh_keys_user: "{{ bastion_student_user_name | default('lab-user') }}"
+ocp4_workload_bastion_student_ssh_keys_group: users
+
+# Bastion SSH key paths (must match the bastion role defaults)
+ocp4_workload_bastion_student_ssh_keys_private_key: "{{ bastion_ssh_key_path | default('~/.ssh/bastion_' ~ guid) }}"
+ocp4_workload_bastion_student_ssh_keys_public_key: "{{ bastion_ssh_pubkey_path | default('~/.ssh/bastion_' ~ guid ~ '.pub') }}"
+ocp4_workload_bastion_student_ssh_keys_ssh_config: ~/.ssh/config
