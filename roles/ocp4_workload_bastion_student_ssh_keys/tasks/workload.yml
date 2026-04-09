@@ -1,5 +1,6 @@
 ---
 - name: Ensure student user .ssh directory exists
+  delegate_to: bastion
   ansible.builtin.file:
     path: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh"
     state: directory
@@ -8,6 +9,7 @@
     mode: u=rwx,go=
 
 - name: Copy SSH private key to student user .ssh directory
+  delegate_to: bastion
   ansible.builtin.copy:
     src: "{{ ocp4_workload_bastion_student_ssh_keys_private_key }}"
     dest: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh/{{ ocp4_workload_bastion_student_ssh_keys_private_key | basename }}"
@@ -17,6 +19,7 @@
     remote_src: true
 
 - name: Copy SSH public key to student user .ssh directory
+  delegate_to: bastion
   ansible.builtin.copy:
     src: "{{ ocp4_workload_bastion_student_ssh_keys_public_key }}"
     dest: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh/{{ ocp4_workload_bastion_student_ssh_keys_public_key | basename }}"
@@ -26,6 +29,7 @@
     remote_src: true
 
 - name: Copy SSH config to student user .ssh directory
+  delegate_to: bastion
   ansible.builtin.copy:
     src: "{{ ocp4_workload_bastion_student_ssh_keys_ssh_config }}"
     dest: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh/config"
