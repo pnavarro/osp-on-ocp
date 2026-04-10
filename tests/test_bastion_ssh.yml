@@ -1,0 +1,41 @@
+---
+- name: Test bastion student SSH keys role (bastion-side only)
+  hosts: bastions
+  gather_facts: false
+  vars:
+    ACTION: provision
+    guid: p98jx
+    bastion_student_user_name: lab-user
+    # Override target hosts to skip authorized_key deployment to unreachable instances
+    ocp4_workload_bastion_student_ssh_keys_target_hosts: []
+  roles:
+  - role: ocp4_workload_bastion_student_ssh_keys
+
+  post_tasks:
+  - name: Verify SSH private key was copied
+    ansible.builtin.stat:
+      path: "~lab-user/.ssh/bastion_{{ guid }}"
+    register: _privkey
+    failed_when: not _privkey.stat.exists
+
+  - name: Verify SSH public key was copied
+    ansible.builtin.stat:
+      path: "~lab-user/.ssh/bastion_{{ guid }}.pub"
+    register: _pubkey
+    failed_when: not _pubkey.stat.exists
+
+  - name: Verify SSH config was generated
+    ansible.builtin.stat:
+      path: "~lab-user/.ssh/config"
+    register: _config
+    failed_when: not _config.stat.exists
+
+  - name: Show generated SSH config
+    ansible.builtin.command:
+      cmd: cat ~lab-user/.ssh/config
+    register: _config_content
+    changed_when: false
+
+  - name: Display SSH config
+    ansible.builtin.debug:
+      var: _config_content.stdout_lines
