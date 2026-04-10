@@ -1,0 +1,7 @@
+---
+- name: Restart nfs-server
+  ansible.builtin.systemd:
+    name: nfs-server
+    state: restarted
+  delegate_to: nfs-server
+  become: true
