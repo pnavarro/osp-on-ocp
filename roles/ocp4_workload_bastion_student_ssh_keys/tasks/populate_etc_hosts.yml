@@ -11,8 +11,3 @@
     line: "{{ hostvars[item].private_ip_address | default(hostvars[item].ansible_host) }} {{ item }}"
     state: present
   loop: "{{ _all_hosts | difference([_etc_hosts_target]) }}"
-  vars:
-    ansible_ssh_common_args: >-
-      {{ _bastion_ssh_proxy_args
-         if _etc_hosts_target != 'bastion'
-         else '' }}
