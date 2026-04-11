@@ -11,3 +11,5 @@
     line: "{{ hostvars[item].private_ip_address | default(hostvars[item].ansible_host) }} {{ item }}"
     state: present
   loop: "{{ _all_hosts | difference([_etc_hosts_target]) }}"
+  vars:
+    ansible_ssh_extra_args: "{{ _isolated_ssh_extra_args }}"

@@ -64,3 +64,5 @@
     key: "{{ _bastion_ssh_pubkey.content | b64decode }}"
     state: present
   loop: "{{ ocp4_workload_bastion_student_ssh_keys_target_hosts }}"
+  vars:
+    ansible_ssh_extra_args: "{{ _isolated_ssh_extra_args }}"
