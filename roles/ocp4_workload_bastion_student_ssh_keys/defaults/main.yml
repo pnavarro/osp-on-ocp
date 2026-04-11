@@ -18,4 +18,4 @@ ocp4_workload_bastion_student_ssh_keys_target_hosts: "{{ groups['isolated'] | de
 _bastion_ssh_proxy_args: >-
   -o StrictHostKeyChecking=no
   -o UserKnownHostsFile=/dev/null
-  -o ProxyJump={{ hostvars['bastion'].ansible_host }}
+  -o ProxyJump={{ hostvars['bastion'].private_ip_address | default(hostvars['bastion'].ansible_host) }}
