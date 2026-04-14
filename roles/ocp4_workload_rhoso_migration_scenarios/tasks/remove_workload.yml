@@ -14,6 +14,6 @@
   delegate_to: bastion
 
 - name: Report removal completion
-  ansible.builtin.debug:
+  agnosticd.core.agnosticd_user_info:
     msg: "Migration scenario job templates have been removed."
   delegate_to: bastion

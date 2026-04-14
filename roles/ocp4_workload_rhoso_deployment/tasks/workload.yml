@@ -36,7 +36,7 @@
   when: ocp4_workload_rhoso_deployment_phase_optional_services | bool
 
 - name: Report deployment completion
-  agnosticd.core.agnosticd_user_info:
+  ansible.builtin.debug:
     msg:
     - ""
     - "RHOSO Deployment Complete"

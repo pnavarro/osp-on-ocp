@@ -6,7 +6,7 @@ ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_conversion_host: true
 ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_install_aap: true
 ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_ansible_builder: true
 ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_configure_migration: true
-ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_configure_aap_api: false
+ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_configure_aap_api: true
 
 # ============================================================================
 # Lab environment

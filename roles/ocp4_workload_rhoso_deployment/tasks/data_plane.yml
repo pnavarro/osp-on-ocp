@@ -122,15 +122,20 @@
 
 - name: Create subscription manager secret
   when:
-  - ocp4_workload_rhoso_deployment_rhc_username | length > 0
-  - ocp4_workload_rhoso_deployment_rhc_password | length > 0
+  - ocp4_workload_rhoso_deployment_rhc_activation_keys | length > 0
+  - ocp4_workload_rhoso_deployment_rhc_organization | length > 0
   delegate_to: bastion
   block:
-  - name: Build subscription manager authentication JSON
+  - name: Build subscription manager rhc_auth JSON
     ansible.builtin.set_fact:
-      _ocp4_workload_rhoso_deployment_rhc_auth: >-
-        {{ {'login': {'username': ocp4_workload_rhoso_deployment_rhc_username,
-                       'password': ocp4_workload_rhoso_deployment_rhc_password}} | to_json }}
+      _ocp4_workload_rhoso_deployment_rhc_auth: "{{ {'activation_keys': {'keys': ocp4_workload_rhoso_deployment_rhc_activation_keys}} | to_json }}"
+
+  - name: Quote rhc_organization for subscription-manager Secret
+    ansible.builtin.set_fact:
+      _ocp4_workload_rhoso_deployment_rhc_org_quoted: "{{ ocp4_workload_rhoso_deployment_rhc_organization | regex_replace('^', _rhc_org_quote) | regex_replace('$', _rhc_org_quote) }}"
+    vars:
+      _rhc_org_quote: '"'
+    when: ocp4_workload_rhoso_deployment_rhc_organization | length > 0
 
   - name: Apply subscription manager secret
     kubernetes.core.k8s:
@@ -142,8 +147,9 @@
           name: subscription-manager
           namespace: "{{ ocp4_workload_rhoso_deployment_openstack_namespace }}"
         type: Opaque
-        data:
-          rhc_auth: "{{ _ocp4_workload_rhoso_deployment_rhc_auth | b64encode }}"
+        stringData:
+          rhc_auth: "{{ _ocp4_workload_rhoso_deployment_rhc_auth }}"
+          rhc_organization: "{{ _ocp4_workload_rhoso_deployment_rhc_org_quoted | default(omit) }}"
 
 - name: Create Red Hat registry secret
   when:
@@ -205,7 +211,7 @@
   kubernetes.core.k8s_info:
     api_version: dataplane.openstack.org/v1beta1
     kind: OpenStackDataPlaneDeployment
-    name: openstack-edpm-compute-1
+    name: openstack-compute01
     namespace: "{{ ocp4_workload_rhoso_deployment_openstack_namespace }}"
   register: _ocp4_workload_rhoso_deployment_dp_status
   until: >

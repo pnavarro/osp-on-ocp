@@ -34,8 +34,8 @@
   kubernetes.core.k8s_cp:
     namespace: "{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_openstack_namespace }}"
     pod: openstackclient
-    remote_path: "/home/cloud-admin/{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}key.pub"
-    local_path: "{{ ansible_env.HOME }}/.ssh/{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}key.pub"
+    remote_path: "/home/cloud-admin/bastion_{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}.pub"
+    local_path: "{{ ansible_env.HOME }}/.ssh/bastion_{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}.pub"
     state: to_pod
   delegate_to: bastion
 
@@ -104,7 +104,7 @@
       fi
 
       if ! openstack keypair show bastion_key &>/dev/null; then
-        openstack keypair create --public-key ~/${LAB_GUID}key.pub bastion_key
+        openstack keypair create --public-key ~/bastion_${LAB_GUID}.pub bastion_key
       fi
 
       if ! openstack image show centos10-image &>/dev/null; then
@@ -115,19 +115,19 @@
           --file CentOS-Stream-GenericCloud-10-latest.x86_64.qcow2
       fi
 
-      if ! openstack server show centos10-ch &>/dev/null; then
+      if ! openstack server show conversion-host &>/dev/null; then
         openstack server create \
           --flavor migrate \
           --key-name bastion_key \
           --network private \
           --security-group basic \
           --image centos10-image \
-          centos10-ch
+          conversion-host
 
         timeout=300
         elapsed=0
         while [ $elapsed -lt $timeout ]; do
-          status=$(openstack server show centos10-ch -f value -c status)
+          status=$(openstack server show conversion-host -f value -c status)
           if [ "$status" == "ACTIVE" ]; then
             break
           fi
@@ -140,7 +140,7 @@
         openstack floating ip create public --floating-ip-address $CONVERSION_HOST_IP
       fi
 
-      openstack server add floating ip centos10-ch $CONVERSION_HOST_IP 2>/dev/null || true
+      openstack server add floating ip conversion-host $CONVERSION_HOST_IP 2>/dev/null || true
 
       openstack server list
   delegate_to: bastion
@@ -193,7 +193,7 @@
     content: |
       Conversion Host Information
       ===========================
-      Name: centos10-ch
+      Name: conversion-host
       IP Address: {{ ocp4_workload_rhoso_migration_toolkit_aap_setup_conversion_host_ip }}
       Image: CentOS Stream 10
       Flavor: migrate (4GB RAM, 2 vCPU, 35GB disk)

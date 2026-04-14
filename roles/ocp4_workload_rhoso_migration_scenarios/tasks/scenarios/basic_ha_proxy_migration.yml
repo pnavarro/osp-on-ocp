@@ -20,7 +20,7 @@
   delegate_to: bastion
 
 - name: Display HAproxy migration scenario result
-  ansible.builtin.debug:
+  agnosticd.core.agnosticd_user_info:
     msg: |
       Job template "{{ ocp4_workload_rhoso_migration_scenarios_basic_ha_proxy_migration_template_name }}" created.
       ID: {{ _ocp4_workload_migration_scenarios_haproxy_result.id | default('already exists') }}

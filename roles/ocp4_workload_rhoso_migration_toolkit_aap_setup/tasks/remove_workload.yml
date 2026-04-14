@@ -70,7 +70,7 @@
     pod: openstackclient
     command: >-
       /bin/bash -c "
-      openstack server delete centos10-ch --wait 2>/dev/null || true;
+      openstack server delete conversion-host --wait 2>/dev/null || true;
       openstack floating ip delete {{ ocp4_workload_rhoso_migration_toolkit_aap_setup_conversion_host_ip }} 2>/dev/null || true;
       openstack router remove subnet vrouter private-net 2>/dev/null || true;
       openstack router delete vrouter 2>/dev/null || true;
