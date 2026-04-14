@@ -70,14 +70,14 @@ ocp4_workload_rhoso_migration_toolkit_aap_setup_openstack_namespace: "openstack"
 # ============================================================================
 # Credentials
 # ============================================================================
-ocp4_workload_rhoso_migration_toolkit_aap_setup_registry_username: "{{ registry_username | default('') }}"
-ocp4_workload_rhoso_migration_toolkit_aap_setup_registry_password: "{{ registry_password | default('') }}"
+ocp4_workload_rhoso_migration_toolkit_aap_setup_registry_username: "{{ ocp4_workload_rhoso_deployment_registry_username | default('') }}"
+ocp4_workload_rhoso_migration_toolkit_aap_setup_registry_password: "{{ ocp4_workload_rhoso_deployment_registry_password | default('') }}"
 
 # ============================================================================
 # VMware credentials (provided via inventory or extra vars)
 # ============================================================================
 ocp4_workload_rhoso_migration_toolkit_aap_setup_vcenter_hostname: "{{ vcenter_hostname | default('') }}"
-ocp4_workload_rhoso_migration_toolkit_aap_setup_vcenter_username: "{{ vcenter_username | default('') }}"
+ocp4_workload_rhoso_migration_toolkit_aap_setup_vcenter_username: "{{ vcenter_full_user | default('') }}"
 ocp4_workload_rhoso_migration_toolkit_aap_setup_vcenter_password: "{{ vcenter_password | default('') }}"
 ocp4_workload_rhoso_migration_toolkit_aap_setup_vcenter_datacenter: "{{ vcenter_datacenter | default('') }}"
 
