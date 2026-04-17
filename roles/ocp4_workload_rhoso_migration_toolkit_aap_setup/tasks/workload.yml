@@ -20,7 +20,7 @@
   when: ocp4_workload_rhoso_migration_toolkit_aap_setup_phase_configure_aap_api | bool
 
 - name: Report deployment completion
-  agnosticd.core.agnosticd_user_info:
+  ansible.builtin.debug:
     msg:
     - ""
     - "VMware Migration Toolkit AAP Setup Complete"
