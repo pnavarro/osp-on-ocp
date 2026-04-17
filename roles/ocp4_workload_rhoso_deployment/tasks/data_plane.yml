@@ -151,31 +151,30 @@
           rhc_auth: "{{ _ocp4_workload_rhoso_deployment_rhc_auth }}"
           rhc_organization: "{{ _ocp4_workload_rhoso_deployment_rhc_org_quoted | default(omit) }}"
 
-- name: Create Red Hat registry secret
-  when:
-  - ocp4_workload_rhoso_deployment_registry_username | length > 0
-  - ocp4_workload_rhoso_deployment_registry_password | length > 0
+- name: Build registry authentication JSON
+  ansible.builtin.set_fact:
+    _ocp4_workload_rhoso_deployment_registry_logins: >-
+      {{ {'registry.redhat.io':
+          {ocp4_workload_rhoso_deployment_registry_username:
+           ocp4_workload_rhoso_deployment_registry_password}} | to_json
+         if (ocp4_workload_rhoso_deployment_registry_username | length > 0 and
+             ocp4_workload_rhoso_deployment_registry_password | length > 0)
+         else '{}' }}
   delegate_to: bastion
-  block:
-  - name: Build registry authentication JSON
-    ansible.builtin.set_fact:
-      _ocp4_workload_rhoso_deployment_registry_logins: >-
-        {{ {'registry.redhat.io':
-            {ocp4_workload_rhoso_deployment_registry_username:
-             ocp4_workload_rhoso_deployment_registry_password}} | to_json }}
 
-  - name: Apply Red Hat registry secret
-    kubernetes.core.k8s:
-      state: present
-      definition:
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: redhat-registry
-          namespace: "{{ ocp4_workload_rhoso_deployment_openstack_namespace }}"
-        type: Opaque
-        data:
-          edpm_container_registry_logins: "{{ _ocp4_workload_rhoso_deployment_registry_logins | b64encode }}"
+- name: Apply Red Hat registry secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: redhat-registry
+        namespace: "{{ ocp4_workload_rhoso_deployment_openstack_namespace }}"
+      type: Opaque
+      data:
+        edpm_container_registry_logins: "{{ _ocp4_workload_rhoso_deployment_registry_logins | b64encode }}"
+  delegate_to: bastion
 
 - name: Wait for OpenStack DataPlane CRDs
   kubernetes.core.k8s_info:
