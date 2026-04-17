@@ -1,4 +1,11 @@
 ---
+- name: Read bastion SSH public key
+  delegate_to: bastion
+  become: true
+  ansible.builtin.slurp:
+    src: "{{ ocp4_workload_bastion_student_ssh_keys_public_key }}"
+  register: _bastion_ssh_pubkey
+
 - name: Ensure student user .ssh directory exists
   delegate_to: bastion
   become: true
@@ -31,13 +38,31 @@
     mode: u=rw,go=
     remote_src: true
 
-- name: Copy SSH config to student user .ssh directory
+- name: Deploy SSH config for student user from template
   delegate_to: bastion
   become: true
-  ansible.builtin.copy:
-    src: "{{ ocp4_workload_bastion_student_ssh_keys_ssh_config }}"
+  ansible.builtin.template:
+    src: ssh_config.j2
     dest: "~{{ ocp4_workload_bastion_student_ssh_keys_user }}/.ssh/config"
     owner: "{{ ocp4_workload_bastion_student_ssh_keys_user }}"
     group: "{{ ocp4_workload_bastion_student_ssh_keys_group }}"
     mode: u=rw,go=
-    remote_src: true
+
+- name: Populate /etc/hosts on each host
+  ansible.builtin.include_tasks: populate_etc_hosts.yml
+  loop: "{{ _all_hosts }}"
+  loop_control:
+    loop_var: _etc_hosts_target
+  vars:
+    _all_hosts: "{{ ['bastion'] + ocp4_workload_bastion_student_ssh_keys_target_hosts }}"
+
+- name: Deploy bastion SSH public key to isolated instances
+  delegate_to: "{{ item }}"
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ ocp4_workload_bastion_student_ssh_keys_remote_user }}"
+    key: "{{ _bastion_ssh_pubkey.content | b64decode }}"
+    state: present
+  loop: "{{ ocp4_workload_bastion_student_ssh_keys_target_hosts }}"
+  vars:
+    ansible_ssh_extra_args: "{{ _isolated_ssh_extra_args }}"

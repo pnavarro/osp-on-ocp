@@ -1,0 +1,41 @@
+---
+- name: Test SSH config template with isolated hosts
+  hosts: bastions
+  gather_facts: false
+  vars:
+    ACTION: provision
+    guid: p98jx
+    bastion_student_user_name: lab-user
+    # Provide target hosts for SSH config generation, but skip authorized_key deployment
+    ocp4_workload_bastion_student_ssh_keys_target_hosts:
+    - compute01
+    - nfsserver
+    ocp4_workload_bastion_student_ssh_keys_remote_user: cloud-user
+    # Simulate hostvars for template rendering
+  tasks:
+  - name: Read bastion SSH public key
+    ansible.builtin.slurp:
+      src: "~lab-user/.ssh/bastion_{{ guid }}.pub"
+    register: _bastion_ssh_pubkey
+
+  - name: Deploy SSH config for student user from template
+    become: true
+    ansible.builtin.template:
+      src: "{{ playbook_dir }}/../roles/ocp4_workload_bastion_student_ssh_keys/templates/ssh_config.j2"
+      dest: "~lab-user/.ssh/config"
+      owner: lab-user
+      group: users
+      mode: u=rw,go=
+    vars:
+      ocp4_workload_bastion_student_ssh_keys_private_key: "~/.ssh/bastion_{{ guid }}"
+      ocp4_workload_bastion_student_ssh_keys_user: lab-user
+
+  - name: Show generated SSH config
+    ansible.builtin.command:
+      cmd: cat ~lab-user/.ssh/config
+    register: _config_content
+    changed_when: false
+
+  - name: Display SSH config
+    ansible.builtin.debug:
+      var: _config_content.stdout_lines
