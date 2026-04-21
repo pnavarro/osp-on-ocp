@@ -52,6 +52,22 @@ ocp4_workload_rhoso_deployment_uuid_replacement_files:
 - osp-ng-dataplane-netconfig.yaml
 
 # ============================================================================
+# Delegation hosts — inventory hostnames used for delegate_to.
+# Override when the inventory names differ (e.g. "nfsserver" instead of
+# "nfs-server", or when compute nodes are unreachable from the controller).
+# ============================================================================
+ocp4_workload_rhoso_deployment_nfs_server_host: "nfsserver"
+ocp4_workload_rhoso_deployment_compute_host: "{{ ocp4_workload_rhoso_deployment_compute_nodes[0].name }}"
+
+# ============================================================================
+# Working directory on the bastion.
+# In AAP EE ansible_env.HOME resolves to /root (the container), so override
+# this variable when running from an Execution Environment.
+# ============================================================================
+ocp4_workload_rhoso_deployment_bastion_home: "{{ ansible_env.HOME }}"
+ocp4_workload_rhoso_deployment_bastion_working_dir: "{{ ocp4_workload_rhoso_deployment_bastion_home }}/{{ ocp4_workload_rhoso_deployment_files_directory }}"
+
+# ============================================================================
 # NFS server
 # ============================================================================
 ocp4_workload_rhoso_deployment_nfs_server_ip: "172.18.0.13"
