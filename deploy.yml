@@ -1,0 +1,61 @@
+---
+# Inner deployment playbook — runs locally on the bastion with
+# ansible_connection=local (set in inventory_bastion_local.yml).
+#
+# Executes three phases in order:
+#   1. RHOSO deployment (operators, control plane, data plane)
+#   2. Migration toolkit AAP setup (conversion host, AAP, EE build)
+#   3. Migration scenarios (job templates in AAP)
+#
+# Each phase can be toggled independently:
+#   -e deploy_phase_rhoso=false
+#   -e deploy_phase_migration_toolkit=false
+#   -e deploy_phase_migration_scenarios=false
+#
+# Usage (from bastion):
+#   ansible-playbook -i inventory_bastion_local.yml deploy.yml -e @vars.yaml
+#
+# When launched via aap_bootstrap.yml, the wrapper handles inventory
+# and vars automatically.
+
+- name: Deploy RHOSO + Migration Toolkit + Scenarios
+  hosts: bastion
+  gather_facts: true
+  become: false
+
+  vars:
+    deploy_phase_rhoso: true
+    deploy_phase_migration_toolkit: true
+    deploy_phase_migration_scenarios: true
+
+  tasks:
+
+  # ---- Phase 1: RHOSO deployment -------------------------------------------
+  - name: "Phase 1/3: Deploy RHOSO"
+    when: deploy_phase_rhoso | bool
+    block:
+    - name: Include RHOSO deployment role
+      ansible.builtin.include_role:
+        name: ocp4_workload_rhoso_deployment
+      vars:
+        ACTION: provision
+
+  # ---- Phase 2: Migration Toolkit AAP Setup --------------------------------
+  - name: "Phase 2/3: Migration Toolkit AAP Setup"
+    when: deploy_phase_migration_toolkit | bool
+    block:
+    - name: Include migration toolkit AAP setup role
+      ansible.builtin.include_role:
+        name: ocp4_workload_rhoso_migration_toolkit_aap_setup
+      vars:
+        ACTION: provision
+
+  # ---- Phase 3: Migration Scenarios ----------------------------------------
+  - name: "Phase 3/3: Migration Scenarios"
+    when: deploy_phase_migration_scenarios | bool
+    block:
+    - name: Include migration scenarios role
+      ansible.builtin.include_role:
+        name: ocp4_workload_rhoso_migration_scenarios
+      vars:
+        ACTION: provision

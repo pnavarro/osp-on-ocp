@@ -34,8 +34,8 @@
   kubernetes.core.k8s_cp:
     namespace: "{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_openstack_namespace }}"
     pod: openstackclient
-    remote_path: "/home/cloud-admin/bastion_{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}.pub"
-    local_path: "{{ ansible_env.HOME }}/.ssh/bastion_{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_guid }}.pub"
+    remote_path: "/home/cloud-admin/bastion_key.pub"
+    local_path: "{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_bastion_ssh_public_key }}"
     state: to_pod
   delegate_to: bastion
 
@@ -104,7 +104,7 @@
       fi
 
       if ! openstack keypair show bastion_key &>/dev/null; then
-        openstack keypair create --public-key ~/bastion_${LAB_GUID}.pub bastion_key
+        openstack keypair create --public-key ~/bastion_key.pub bastion_key
       fi
 
       if ! openstack image show centos10-image &>/dev/null; then

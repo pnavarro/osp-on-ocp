@@ -1,8 +1,10 @@
 ---
-- name: Install ansible-builder on bastion
+- name: Install ansible-builder and setuptools via pip
   become: true
-  ansible.builtin.dnf:
-    name: ansible-builder
+  ansible.builtin.pip:
+    name:
+    - ansible-builder
+    - setuptools
     state: present
   delegate_to: bastion
 
@@ -116,7 +118,7 @@
 - name: Build execution environment with ansible-builder
   ansible.builtin.command:
     cmd: >-
-      ansible-builder build
+      {{ ansible_python_interpreter | dirname }}/ansible-builder build
       --tag {{ ocp4_workload_rhoso_migration_toolkit_aap_setup_ee_image_name }}:{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_ee_image_tag }}
     chdir: "{{ ansible_env.HOME }}/{{ ocp4_workload_rhoso_migration_toolkit_aap_setup_builder_work_dir }}"
   register: _ocp4_workload_migration_builder_output

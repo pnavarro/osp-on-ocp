@@ -1,0 +1,32 @@
+---
+all:
+  children:
+    bastion_group:
+      hosts:
+        bastion:
+          ansible_connection: local
+          ansible_python_interpreter: /opt/virtualenvs/k8s/bin/python3
+
+    compute:
+      hosts:
+        compute01:
+          ansible_host: compute01
+          ansible_user: cloud-user
+          ansible_ssh_private_key_file: "~/.ssh/{{ guid }}key.pem"
+          ansible_python_interpreter: /usr/bin/python3
+      vars:
+        ansible_ssh_common_args: >-
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+
+    nfs_server:
+      hosts:
+        nfsserver:
+          ansible_host: nfsserver
+          ansible_user: cloud-user
+          ansible_ssh_private_key_file: "~/.ssh/{{ guid }}key.pem"
+          ansible_python_interpreter: /usr/libexec/platform-python
+      vars:
+        ansible_ssh_common_args: >-
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null

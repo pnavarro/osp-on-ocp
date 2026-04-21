@@ -1,0 +1,105 @@
+---
+# AAP wrapper playbook — runs FROM the Execution Environment, targets the
+# bastion via SSH (Machine credential).  It bootstraps the bastion with the
+# collection, its dependencies, and a vars file, then launches deploy.yml
+# locally on the bastion so that cluster-internal DNS, kubeconfig, and SSH
+# keys are all available without proxy tricks.
+#
+# deploy.yml runs all three phases in sequence:
+#   1. RHOSO deployment
+#   2. Migration toolkit AAP setup
+#   3. Migration scenarios
+#
+# AAP Job Template configuration:
+#   Playbook:        aap_bootstrap.yml
+#   Inventory:       inventory with bastion host (SSH-reachable from EE)
+#   Credential:      Machine credential for bastion
+#   Extra Variables:  guid, registry_*, rhc_*, phase toggles, etc.
+#
+# To skip individual phases, pass:
+#   -e deploy_phase_rhoso=false
+#   -e deploy_phase_migration_toolkit=false
+#   -e deploy_phase_migration_scenarios=false
+
+- name: Bootstrap bastion and run deployment
+  hosts: bastion
+  gather_facts: true
+  become: false
+
+  vars:
+    _bootstrap_workdir: "{{ ansible_env.HOME }}/rhoso-deploy"
+    _bootstrap_venv: "/opt/virtualenvs/k8s"
+
+  tasks:
+
+    # ---- workspace --------------------------------------------------------
+    - name: Create working directory on bastion
+      ansible.builtin.file:
+        path: "{{ _bootstrap_workdir }}"
+        state: directory
+        mode: "0755"
+
+    # ---- sync collection source -------------------------------------------
+    - name: Sync collection source to bastion
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/"
+        dest: "{{ _bootstrap_workdir }}/"
+        delete: true
+        recursive: true
+        rsync_opts:
+        - "--exclude=.git"
+        - "--exclude=.venv"
+
+    # ---- Python deps (idempotent pip into the bastion venv) ---------------
+    - name: Install Python dependencies in bastion venv
+      ansible.builtin.pip:
+        name:
+        - kubernetes
+        - openshift
+        virtualenv: "{{ _bootstrap_venv }}"
+        state: present
+
+    # ---- Ansible collection deps ------------------------------------------
+    - name: Install Ansible collection dependencies
+      ansible.builtin.command:
+        cmd: >-
+          {{ _bootstrap_venv }}/bin/ansible-galaxy collection install
+          -r {{ _bootstrap_workdir }}/requirements.yml
+          --force
+      changed_when: true
+
+    # ---- Install this collection from source --------------------------------
+    - name: Install the collection from source directory
+      ansible.builtin.command:
+        cmd: >-
+          {{ _bootstrap_venv }}/bin/ansible-galaxy collection install
+          {{ _bootstrap_workdir }}
+          --force
+      changed_when: true
+
+    # ---- Write vars file from AAP extra vars ------------------------------
+    - name: Generate vars file from deployment variables
+      ansible.builtin.copy:
+        content: |-
+          {{ vars | dict2items
+             | rejectattr('key', 'match', '^(ansible_|_bootstrap|playbook_dir|role_|inventory_|group_names|groups|hostvars|omit|environment|gather_subset|gather_timeout|module_setup)')
+             | items2dict
+             | to_nice_yaml }}
+        dest: "{{ _bootstrap_workdir }}/vars.yaml"
+        mode: "0600"
+
+    # ---- Run the inner deployment playbook --------------------------------
+    - name: Run deploy.yml locally on bastion
+      ansible.builtin.command:
+        cmd: >-
+          {{ _bootstrap_venv }}/bin/ansible-playbook
+          -i {{ _bootstrap_workdir }}/inventory_bastion_local.yml
+          {{ _bootstrap_workdir }}/deploy.yml
+          -e @{{ _bootstrap_workdir }}/vars.yaml
+        chdir: "{{ _bootstrap_workdir }}"
+      register: _bootstrap_deploy
+      changed_when: true
+
+    - name: Display deployment result
+      ansible.builtin.debug:
+        msg: "{{ _bootstrap_deploy.stdout_lines[-30:] }}"
